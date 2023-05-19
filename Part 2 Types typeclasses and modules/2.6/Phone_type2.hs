@@ -1,3 +1,25 @@
+-- Phone_type2 module
+module Phone_type2
+  ( Phone(..)
+  , CountryCode(..)
+  , PhoneBookEntry(..)
+  , readPhone
+  , fromPhoneNo
+  , toPhoneNo
+  ) where
+
+-- Import necessary modules
+import Data.List (isPrefixOf)
+
+-- PhoneBookEntry type
+data PhoneBookEntry = PhoneBookEntry
+  { entryName :: String
+  , entryPhone :: Phone
+  } deriving (Eq, Ord)
+
+instance Show PhoneBookEntry where
+  show (PhoneBookEntry name phone) = name ++ ": " ++ show phone
+
 -- CountryCode type
 newtype CountryCode = CountryCode Integer deriving (Eq, Ord)
 
@@ -11,18 +33,14 @@ instance Num CountryCode where
   (+) (CountryCode a) (CountryCode b) = fromInteger $ a + b
   (-) (CountryCode a) (CountryCode b) = fromInteger $ a - b
   (*) (CountryCode a) (CountryCode b) = fromInteger $ a * b
-
--- toCountryCode function
-toCountryCode :: Integer -> CountryCode
-toCountryCode n
-  | n < 0     = error "Negative country code"
-  | otherwise = CountryCode n
+  abs (CountryCode a) = CountryCode (abs a)
+  signum (CountryCode a) = CountryCode (signum a)
 
 -- PhoneNo type
 newtype PhoneNo = PhoneNo Integer deriving (Eq, Ord)
 
 instance Show PhoneNo where
-  show (PhoneNo no) = show no
+  show (PhoneNo n) = show n
 
 instance Num PhoneNo where
   fromInteger n
@@ -31,12 +49,8 @@ instance Num PhoneNo where
   (+) (PhoneNo a) (PhoneNo b) = fromInteger $ a + b
   (-) (PhoneNo a) (PhoneNo b) = fromInteger $ a - b
   (*) (PhoneNo a) (PhoneNo b) = fromInteger $ a * b
-
--- toPhoneNo function
-toPhoneNo :: Integer -> PhoneNo
-toPhoneNo n
-  | n < 0     = error "Negative phone number"
-  | otherwise = PhoneNo n
+  abs (PhoneNo a) = PhoneNo (abs a)
+  signum (PhoneNo a) = PhoneNo (signum a)
 
 -- PhoneType type
 data PhoneType = WorkLandline | PrivateMobile | WorkMobile | Other deriving (Eq, Ord, Read, Show)
@@ -63,17 +77,32 @@ readInteger = foldl (\acc c -> acc * 10 + charToInt c) 0
 
 -- Helper function: charToInt to convert a character to an integer
 charToInt :: Char -> Integer
-charToInt '0' = 0
-charToInt '1' = 1
-charToInt '2' = 2
-charToInt '3' = 3
-charToInt '4' = 4
-charToInt '5' = 5
-charToInt '6' = 6
-charToInt '7' = 7
-charToInt '8' = 8
-charToInt '9' = 9
-charToInt _   = error "Unknown country code"
+charToInt c
+  | c `elem` ['0'..'9'] = toInteger $ fromEnum c - fromEnum '0'
+  | otherwise           = error $ "Invalid digit: " ++ [c]
+
+-- Helper function: readPhoneType to read PhoneType from string
+readPhoneType :: String -> PhoneType
+readPhoneType str
+  | isPrefixOf' "WorkLandline" str   = WorkLandline
+  | isPrefixOf' "PrivateMobile" str = PrivateMobile
+  | isPrefixOf' "WorkMobile" str    = WorkMobile
+  | isPrefixOf' "Other" str         = Other
+  | otherwise                       = error $ "Invalid phone type: " ++ str
+
+readCountryCode str
+  | isPrefixOf' "+358" str    = CountryCode (readInteger (drop 1 str))
+  | isPrefixOf' "00358" str   = CountryCode (readInteger (drop 2 str))
+  | isPrefixOf' "358" str     = CountryCode (readInteger str)
+  | otherwise                 = error $ "Invalid country code: " ++ str
+
+
+
+-- Helper function: readPhoneNo to read PhoneNo from string
+readPhoneNo :: String -> PhoneNo
+readPhoneNo str
+  | all (`elem` ['0'..'9']) str = PhoneNo (readInteger str)
+  | otherwise                   = error $ "Invalid phone number: " ++ str
 
 -- Phone type
 data Phone = Phone
@@ -85,24 +114,10 @@ data Phone = Phone
 instance Show Phone where
   show (Phone pType cCode pNo) = show cCode ++ " " ++ show pNo ++ " (" ++ show pType ++ ")"
 
--- readCountryCode function
-readCountryCode :: String -> CountryCode
-readCountryCode str
-  | '+' `elem` str = toCountryCode (readInteger (filter (\c -> c >= '0' && c <= '9') str))
-  | "00" `isPrefixOf'` str = toCountryCode (readInteger (drop 2 str))
-  | elem (readInteger str) predefinedCountryCodes = toCountryCode (readInteger str)
-  | otherwise = error $ if null str then "Empty country code" else "Unknown country code"
+fromPhoneNo :: PhoneNo -> Integer
+fromPhoneNo (PhoneNo n) = n
 
--- readPhoneType function
-readPhoneType :: String -> PhoneType
-readPhoneType "WorkLandline" = WorkLandline
-readPhoneType "PrivateMobile" = PrivateMobile
-readPhoneType "WorkMobile" = WorkMobile
-readPhoneType "Other" = Other
-readPhoneType _ = error "Incorrect phone type"
-
--- readPhoneNo function
-readPhoneNo :: String -> PhoneNo
-readPhoneNo str
-  | not (null str) && all (\c -> c >= '0' && c <= '9') str = toPhoneNo (readInteger str)
-  | otherwise = error $ if null str then "Empty phone number" else "Incorrect phone number"
+toPhoneNo :: Integer -> PhoneNo
+toPhoneNo n
+  | n < 0     = error "Negative phone number"
+  | otherwise = PhoneNo n

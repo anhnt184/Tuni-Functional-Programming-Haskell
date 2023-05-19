@@ -50,20 +50,3 @@ instance Show Phone where
 -- makePhone function
 makePhone :: PhoneType -> CountryCode -> PhoneNo -> Phone
 makePhone pType cCode pNo = Phone pType cCode pNo
-
--- -- main function
--- main :: IO ()
--- main = do
---   input1 <- getLine
---   input2 <- getLine
---   input3 <- getLine
-
---   let pType = read input1
---       cCode = toCountryCode (read input2)
---       pNo = toPhoneNo (read input3)
-
---       invalidInput = any (not . (`elem` ['0'..'9'])) input2 || any (not . (`elem` ['0'..'9'])) input3
-
---   if invalidInput
---     then error "Invalid input"
---     else print $ makePhone pType cCode pNo

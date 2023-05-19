@@ -106,3 +106,26 @@ readPhoneNo :: String -> PhoneNo
 readPhoneNo str
   | not (null str) && all (\c -> c >= '0' && c <= '9') str = toPhoneNo (readInteger str)
   | otherwise = error $ if null str then "Empty phone number" else "Incorrect phone number"
+
+-- PhoneBookEntry type
+data PhoneBookEntry = PhoneBookEntry { name :: String , phone :: Phone } deriving(Eq, Ord, Show)
+
+-- PhoneBook type
+type PhoneBook = [PhoneBookEntry]
+
+-- findEntries function
+findEntries :: String -> PhoneBook -> PhoneBook
+findEntries query phoneBook = filter (\entry -> name entry == query) phoneBook
+
+-- addEntry function
+addEntry :: String -> String -> String -> String -> PhoneBook -> PhoneBook
+addEntry name pTypeStr cCodeStr pNoStr phoneBook
+  | entryExists name pNo phoneBook = phoneBook
+  | otherwise = phoneBook ++ [PhoneBookEntry name (readPhone pTypeStr cCodeStr pNoStr)]
+  where
+    pNo = readPhoneNo pNoStr
+
+-- Helper function: entryExists to check if an entry already exists in the phone book
+entryExists :: String -> PhoneNo -> PhoneBook -> Bool
+entryExists entryName pNo phoneBook = any (\entry -> entryName == name entry && pNo == phoneNo (phone entry)) phoneBook
+
